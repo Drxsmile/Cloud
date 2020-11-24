@@ -1,0 +1,27 @@
+scalar Date
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type Query{
+    imageById(id: ID!): Image
+}
+
+type Mutation{
+    applyFilter(imageId: ID!, filterName: String!): Image
+}
+
+type Image{
+    id: ID! # DynamoDB primary key
+    name: String!
+    location: String!
+    time: Date!
+    filter: Filter!
+}
+
+type Filter{
+    name: String! # origin or name
+    originalImageId: ID!
+}

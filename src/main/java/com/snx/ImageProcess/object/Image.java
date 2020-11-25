@@ -25,4 +25,8 @@ public class Image {
         this.time = format.format(new Date());
         this.filter = new Filter(id);
     }
+
+    public void setFilter(String filterName) {
+        this.filter.setName(filterName);
+    }
 }

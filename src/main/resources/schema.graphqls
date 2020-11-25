@@ -6,18 +6,20 @@ schema {
 }
 
 type Query{
-    imageById(id: ID!): Image
+    getImageById(id: ID!): Image
+    findAllImages: [Image]
 }
 
 type Mutation{
-    applyFilter(imageId: ID!, filterName: String!): Image
+    updateFilter(imageId: ID!, filterName: String!): Image
+    updateImageInfo(id: ID!, name: String, location: String): Image
 }
 
 type Image{
     id: ID! # DynamoDB primary key
     name: String!
     location: String!
-    time: Date!
+    time: Date! # uploadTime
     filter: Filter!
 }
 

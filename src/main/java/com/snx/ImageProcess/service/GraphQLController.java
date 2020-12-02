@@ -38,7 +38,7 @@ public class GraphQLController {
     }
 
     @PostMapping
-    public Map<String, Object> myGraphql(@RequestBody RequestQuery query){
+    public Map<String, Object> myGraphql(@RequestBody RequestQuery query) {
         Object context;
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
                 .query(query.getQuery())
@@ -48,5 +48,6 @@ public class GraphQLController {
         ExecutionResult executionResult = graphQL.execute(executionInput);
         return executionResult.toSpecification();
     }
+
 
 }

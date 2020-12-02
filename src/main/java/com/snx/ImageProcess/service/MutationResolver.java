@@ -1,55 +1,67 @@
 package com.snx.ImageProcess.service;
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver;
+import com.snx.ImageProcess.dao.DaoRepository;
 import com.snx.ImageProcess.object.Image;
-import graphql.GraphQL;
+import com.snx.ImageProcess.object.UpdateImageInput;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class MutationResolver implements GraphQLMutationResolver {
-    private static Map<String, Image> images = new HashMap<>();
-        static {
-            images.put("1", new Image("1", "image1", "Beijing"));
-            images.put("2", new Image("2", "image2", "Shanghai"));
-        }
+    @Autowired
+    private DaoRepository dao;
 
-    public Image updateFilter(String imageId, String filterName){
-        if(images.containsKey(imageId)){
-            Image newImage = images.get(imageId);
-            newImage.setFilter(filterName);
-            images.put(imageId, newImage);
-            return newImage;
-        }
-        throw new RuntimeException("Wrong Id");
+    public Image saveOriginImage(String name, String imagePath) throws IOException {
+        String key = dao.s3UploadImage(imagePath);
+        Image image = new Image();
+        image.setS3Key(key);
+        image.setName(name);
+        image.setFilterName("origin");
+        dao.saveImage(image);
+        return image;
     }
-    public Image updateImageInfo(String imageId){
-        if(images.containsKey(imageId)){
-            return images.get(imageId);
+
+    public Image updateImage(UpdateImageInput input) throws IOException {
+        Image image = dao.getImage(input.getId(), input.getTime());
+        String filterName = input.getFilterName();
+        String name = input.getName();
+        if(!filterName.equals(null)){
+            String key = image.getS3Key();
+            image.setFilterName(filterName);
+            BufferedImage filteredImage = dao.applyFilter(dao.s3download(key), filterName);
+            File file = new File("temp.png");
+            ImageIO.write(filteredImage, "png", file);
+            String newKey = dao.s3UploadImage("temp.png");
+            image.setS3Key(newKey);
+            file.delete();
+            if(!input.getSaveAnother())  dao.s3DeleteImage(key);
         }
-        throw new RuntimeException("Wrong Id");
+        if(!name.equals(null)) image.setName(name);
+        if (input.getSaveAnother())  image.setTime(new Date());
+        dao.saveImage(image);
+        return image;
     }
-    public Image updateImageInfo(String imageId, String name){
-        if(images.containsKey(imageId)){
-            Image newImage = images.get(imageId);
-            newImage.setName(name);
-            images.put(imageId, newImage);
-            return newImage;
-        }
-        throw new RuntimeException("Wrong Id");
+
+    public Boolean deleteImage(String id, String time) {
+        Image image = dao.getImage(id, time);
+        dao.s3DeleteImage(image.getS3Key());
+        dao.deleteImage(image);
+        return true;
     }
-    public Image updateImageInfo(String imageId, String name, String loc){
-        if(images.containsKey(imageId)){
-            Image newImage = images.get(imageId);
-            newImage.setName(name);
-            newImage.setLocation(loc);
-            images.put(imageId, newImage);
-            return newImage;
-        }
-        throw new RuntimeException("Wrong Id");
+
+    public Boolean deleteImages(String id) {
+        //TODO
+//        List<Image> images = dao.getImages(id);
+        return true;
     }
 }
+
+

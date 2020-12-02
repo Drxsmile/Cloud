@@ -1,32 +1,34 @@
 package com.snx.ImageProcess.object;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Image {
+@DynamoDBTable(tableName = "Image")
+public class Image implements Serializable {
+    @DynamoDBHashKey
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "filterName-id-index")
     private String id;
-    private String name;
-    private String location;
-    private String time;
-    private Filter filter;
-    static DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    public Image(String id, String name, String location){
-        this.id = id;
-        this.name = name;
-        this.location = location;
-        this.time = format.format(new Date());
-        this.filter = new Filter(id);
-    }
 
-    public void setFilter(String filterName) {
-        this.filter.setName(filterName);
-    }
+    @DynamoDBAttribute
+    private String name;
+
+    @DynamoDBAttribute
+    private String s3Key;
+
+    @DynamoDBTypeConvertedTimestamp(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timeZone = "UTC+08:00")
+    @DynamoDBRangeKey
+    private Date time;
+
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "filterName-id-index")
+    @DynamoDBAttribute
+    private String filterName;
+
 }

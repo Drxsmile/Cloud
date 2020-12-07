@@ -7,9 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Data
@@ -36,9 +33,4 @@ public class Image implements Serializable {
     @DynamoDBAttribute
     private String filterName;
 
-//    public Date getTime() throws ParseException {
-//        DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-//        String s = format.format(time);
-//        return format.parse(s);
-//    }
 }

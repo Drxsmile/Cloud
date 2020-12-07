@@ -113,6 +113,7 @@ public class DaoRepository {
         eav.put(":v2", new AttributeValue().withS(gsiRangeKey));
         DynamoDBQueryExpression<Image> queryExpression = new DynamoDBQueryExpression()
                 .withIndexName(gsi)
+                .withConsistentRead(false)
                 .withKeyConditionExpression("filterName = :v1 and id = :v2")
                 .withExpressionAttributeValues(eav);
         List<Image> latestReplies = dbMapper.query(Image.class, queryExpression);
@@ -124,6 +125,7 @@ public class DaoRepository {
         eav.put(":v1", new AttributeValue().withS(gsiHashKey));
         DynamoDBQueryExpression<Image> queryExpression = new DynamoDBQueryExpression()
                 .withIndexName(gsi)
+                .withConsistentRead(false)
                 .withKeyConditionExpression("filterName = :v1")
                 .withExpressionAttributeValues(eav);
         List<Image> latestReplies = dbMapper.query(Image.class, queryExpression);

@@ -4,6 +4,7 @@ import com.coxautodev.graphql.tools.SchemaParser;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
+import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +31,7 @@ public class GraphQLController {
         GraphQLSchema graphQLSchema = SchemaParser.newParser()
                 .file("schema.graphqls")
                 .resolvers(queryResolver, mutationResolver)
-                .scalars(GraphQLDataScalar.DATE)
+                .scalars(GraphQLScalarType.newScalar(new GraphQLDateScalar()).build())
                 .build()
                 .makeExecutableSchema();
         graphQL = GraphQL.newGraphQL(graphQLSchema).build();

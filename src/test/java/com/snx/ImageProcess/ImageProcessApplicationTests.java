@@ -43,12 +43,12 @@ class ImageProcessApplicationTests {
 //		System.out.println(awsConfig.s3Client().getRegion());
     }
 
-    @Test
-    void testSaveImage() {
-        Date date = new Date();
-        Image image = new Image("4", "i1", "234", date, "origin");
-        daoRepository.saveImage(image);
-    }
+//    @Test
+//    void testSaveImage() {
+//        Date date = new Date();
+//        Image image = new Image("4", "i1", "234", date, "origin");
+//        daoRepository.saveImage(image);
+//    }
 
     @Test
     void myTest() {
@@ -87,26 +87,27 @@ class ImageProcessApplicationTests {
     }
 
     @Test
-    void testGetImages() {
+    void testGetImages() throws ParseException {
         List<Image> images = daoRepository.getImages("12");
-        for (Image i : images) {
-            System.out.println(i);
-        }
+//        for (Image i : images) {
+//            System.out.println(i);
+//        }
+        System.out.println(images.get(0).getTime());
     }
 
     @Autowired
     private MutationResolver mutationResolver;
 
-    @Test
-    void testUpdateImage() throws ParseException, IOException {
-        String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
-//        Image image = mutationResolver.saveOriginImage("sd", path);
-        UpdateImageInput input = UpdateImageInput.builder()
-                .filterName("Grayscale")
-                .id("b7f703a9-84f0-41d7-83a4-78ce78f98f4f")
-                .name("sd")
-                .newName("dpd").build();
-//        mutationResolver.updateImage(input);
-        mutationResolver.deleteImage("b7f703a9-84f0-41d7-83a4-78ce78f98f4f", "dwd");
-    }
+//    @Test
+//    void testUpdateImage() throws ParseException, IOException {
+//        String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
+////        Image image = mutationResolver.saveOriginImage("sd", path);
+//        UpdateImageInput input = UpdateImageInput.builder()
+//                .filterName("Grayscale")
+//                .id("b7f703a9-84f0-41d7-83a4-78ce78f98f4f")
+//                .name("sd")
+//                .newName("dpd").build();
+////        mutationResolver.updateImage(input);
+//        mutationResolver.deleteImage("b7f703a9-84f0-41d7-83a4-78ce78f98f4f", "dwd");
+//    }
 }

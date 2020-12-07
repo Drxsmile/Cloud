@@ -4,10 +4,11 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression;
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
 import com.google.common.collect.ImmutableMap;
-import com.jhlabs.image.GrayFilter;
 import com.snx.ImageProcess.dao.AwsConfig;
 import com.snx.ImageProcess.dao.DaoRepository;
 import com.snx.ImageProcess.object.Image;
+import com.snx.ImageProcess.object.UpdateImageInput;
+import com.snx.ImageProcess.service.MutationResolver;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,7 +18,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 
 @SpringBootTest
 class ImageProcessApplicationTests {
@@ -36,7 +39,7 @@ class ImageProcessApplicationTests {
     @Test
     void testS3UploadImage() throws IOException {
         String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
-        System.out.println(daoRepository.s3UploadImage(path));
+//        System.out.println(daoRepository.s3UploadImage(path));
 //		System.out.println(awsConfig.s3Client().getRegion());
     }
 
@@ -64,7 +67,11 @@ class ImageProcessApplicationTests {
                 .put("time", new ExpectedAttributeValue(false))
                 .put("filterName", new ExpectedAttributeValue(false))
                 .build());
-        Image image = new Image("12", "i1", "234", new Date(), "origin");
+        if (daoRepository.getImage("12", "i2") != null) {
+            System.out.println("ss");
+            return;
+        }
+        Image image = new Image("12", "i2", "234", new Date(), "origin");
         dbMapper.save(image, saveExpression);
 //		DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression();
 //		dbMapper.query(image, queryExpression);
@@ -74,17 +81,32 @@ class ImageProcessApplicationTests {
     void testImageFilter() throws IOException {
         String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
         BufferedImage image = ImageIO.read(new FileInputStream(path));
-        GrayFilter grayFilter = new GrayFilter();
-        BufferedImage dst = grayFilter.filter(image, null);
-        File outputfile = new File("/Users/s/Desktop/腹肌小孩/saeve.png");
-        ImageIO.write(dst, "png", outputfile);
+        BufferedImage dst = daoRepository.myGray(image);
+        File outputfile = new File("/Users/s/Desktop/腹肌小孩/save3.jpeg");
+        ImageIO.write(dst, "jpeg", outputfile);
     }
-    @Test
-    void testGetImages(){
-        daoRepository.getImages("1");
-    }
-    @Test
-    void testUpdateImage(){
 
+    @Test
+    void testGetImages() {
+        List<Image> images = daoRepository.getImages("12");
+        for (Image i : images) {
+            System.out.println(i);
+        }
+    }
+
+    @Autowired
+    private MutationResolver mutationResolver;
+
+    @Test
+    void testUpdateImage() throws ParseException, IOException {
+        String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
+//        Image image = mutationResolver.saveOriginImage("sd", path);
+        UpdateImageInput input = UpdateImageInput.builder()
+                .filterName("Grayscale")
+                .id("b7f703a9-84f0-41d7-83a4-78ce78f98f4f")
+                .name("sd")
+                .newName("dpd").build();
+//        mutationResolver.updateImage(input);
+        mutationResolver.deleteImage("b7f703a9-84f0-41d7-83a4-78ce78f98f4f", "dwd");
     }
 }

@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class MutationResolver implements GraphQLMutationResolver {
@@ -20,47 +21,82 @@ public class MutationResolver implements GraphQLMutationResolver {
     private DaoRepository dao;
 
     public Image saveOriginImage(String name, String imagePath) throws IOException {
-        String key = dao.s3UploadImage(imagePath);
-        Image image = new Image();
-        image.setS3Key(key);
-        image.setName(name);
-        image.setFilterName("origin");
-        dao.saveImage(image);
+        //        DefaultGraphQLServletContext context = env.getContext();
+        UUID id = UUID.randomUUID();
+        Image image = Image.builder()
+                .id(id.toString())
+                .filterName("origin")
+                .name(name)
+                .time(new Date())
+                .build();
+        try {
+            String key = id.toString() + name + image.getFilterName();
+            dao.s3UploadImage(key, imagePath);
+            image.setS3Key(key);
+        } catch (IOException e) {
+            throw e;
+        }
+        try {
+            dao.saveImage(image);
+        } catch (Exception e) {
+            dao.s3DeleteImage(image.getS3Key());
+            throw e;
+        }
         return image;
     }
 
     public Image updateImage(UpdateImageInput input) throws IOException {
-        Image image = dao.getImage(input.getId(), input.getTime());
+        String id = input.getId();
+        Image image = dao.getImage(id, input.getName());
         String filterName = input.getFilterName();
-        String name = input.getName();
-        if(!filterName.equals(null)){
+        String newName = input.getNewName();
+        Image newImage = Image.builder()
+                .id(id)
+                .time(new Date())
+                .filterName(filterName)
+                .name(newName)
+                .build();
+        String des = id + newName + filterName;
+        if (filterName.equals(image.getFilterName())) {
             String key = image.getS3Key();
-            image.setFilterName(filterName);
+            dao.s3CopyImage(key, des);
+        } else {
+            String key = id + input.getName() + "origin";
             BufferedImage filteredImage = dao.applyFilter(dao.s3download(key), filterName);
             File file = new File("temp.png");
             ImageIO.write(filteredImage, "png", file);
-            String newKey = dao.s3UploadImage("temp.png");
-            image.setS3Key(newKey);
+            dao.s3UploadImage(des, "temp.png");
             file.delete();
-            if(!input.getSaveAnother())  dao.s3DeleteImage(key);
         }
-        if(!name.equals(null)) image.setName(name);
-        if (input.getSaveAnother())  image.setTime(new Date());
-        dao.saveImage(image);
-        return image;
+        newImage.setS3Key(des);
+        dao.saveImage(newImage);
+        return newImage;
     }
 
-    public Boolean deleteImage(String id, String time) {
-        Image image = dao.getImage(id, time);
-        dao.s3DeleteImage(image.getS3Key());
-        dao.deleteImage(image);
+    public Boolean deleteImage(String id, String name) {
+        Image image = dao.getImage(id, name);
+        String key = image.getS3Key();
+        if (dao.s3DeleteImage(key)) {
+            dao.deleteImage(image);
+        } else {
+            return false;
+        }
         return true;
     }
 
     public Boolean deleteImages(String id) {
-        //TODO
-//        List<Image> images = dao.getImages(id);
-        return true;
+        boolean isDeleted = true;
+        List<Image> images = dao.getImages(id);
+        for (Image i : images) {
+            if (dao.s3DeleteImage(i.getS3Key())) {
+                dao.deleteImage(i);
+            } else {
+                System.out.println(i.getId());
+                isDeleted = false;
+                continue;
+            }
+        }
+        return isDeleted;
     }
 }
 

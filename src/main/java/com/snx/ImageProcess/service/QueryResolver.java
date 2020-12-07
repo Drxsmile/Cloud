@@ -1,42 +1,33 @@
 package com.snx.ImageProcess.service;
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver;
+import com.snx.ImageProcess.dao.DaoRepository;
 import com.snx.ImageProcess.object.Image;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class QueryResolver implements GraphQLQueryResolver {
 
-    //    public Image getImageById(String id) {
-////        return images
-////                .stream()
-////                .filter(image -> image.getId().equals(id))
-////                .findFirst()
-////                .orElse(null);
-//
-//    return new Image();
-//    }
-    public List<Image> getImageByPrimaryKey(String id, String time) {
-        //TODO
-        return new ArrayList<>();
+    @Autowired
+    private DaoRepository dao;
+
+    public Image getImageByPrimaryKey(String id, String name) {
+        return dao.getImage(id, name);
     }
 
     public List<Image> getImagesByOriginImage(String id) {
-        //TODO
-        return new ArrayList<>();
+        return dao.getImages(id);
     }
 
     public Image findImageByFilteredImage(String id) {
-        //TODO
-        return new Image();
+        return dao.getImageByGSI("filterName-id-index", id, "origin");
     }
 
     public List<Image> findImagesByFilterType(String filterName) {
-        //TODO
-        return new ArrayList<>();
+        return dao.getImagesByGSI("filterName-id-index", filterName);
     }
 
 }

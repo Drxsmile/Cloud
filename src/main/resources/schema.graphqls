@@ -6,7 +6,7 @@ schema {
 }
 
 type Query{
-    getImageByPrimaryKey(id: ID!, time: String!): [Image]
+    getImageByPrimaryKey(id: ID!, time: String!): Image
     getImagesByOriginImage(id: ID!): [Image]
     findImageByFilteredImage(id: ID!): Image
     findImagesByFilterType(filterName: String!): [Image]
@@ -15,22 +15,23 @@ type Query{
 type Mutation{
     saveOriginImage(name: String!, imagePath: String!): Image
     updateImage(input: UpdateImageInput!): Image
-    deleteImage(id: ID!, time: String!): Boolean
+    deleteImage(id: ID!, name: String!): Boolean
     deleteImages(id: ID!): Boolean
 }
 
 input UpdateImageInput{
+    # image info
     id: ID!
-    time: String!
-    filterName: String
-    name: String
-    saveAnother: Boolean!
+    name: String!
+    # update info
+    filterName: String!
+    newName: String!
 }
 
 type Image{
     id: ID! # DynamoDB primary key（Hashkey）& GSI sk
     filterName: String! # GSI pk
-    name: String!
-    s3Key: String!
-    time: Date! # DynamoDB primary key（Rangekey）
+    name: String! # DynamoDB primary key（Rangekey）
+    s3Key: String! # ID+filterName
+    time: Date!
 }

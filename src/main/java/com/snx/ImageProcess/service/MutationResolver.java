@@ -59,17 +59,32 @@ public class MutationResolver implements GraphQLMutationResolver {
         String des = id + newName + filterName;
         if (filterName.equals(image.getFilterName())) {
             String key = image.getS3Key();
-            dao.s3CopyImage(key, des);
+            try{
+                dao.s3CopyImage(key, des);
+            }catch (Exception e) {
+                throw e;
+            }
         } else {
             String key = id + input.getName() + "origin";
-            BufferedImage filteredImage = dao.applyFilter(dao.s3download(key), filterName);
-            File file = new File("temp.png");
-            ImageIO.write(filteredImage, "png", file);
-            dao.s3UploadImage(des, "temp.png");
-            file.delete();
+            File file = null;
+            try {
+                BufferedImage filteredImage = dao.applyFilter(dao.s3download(key), filterName);
+                file = new File("temp.png");
+                ImageIO.write(filteredImage, "png", file);
+                dao.s3UploadImage(des, "temp.png");
+            } catch (Exception e) {
+                throw e;
+            } finally {
+                file.delete();
+            }
         }
         newImage.setS3Key(des);
-        dao.saveImage(newImage);
+        try{
+            dao.saveImage(newImage);
+        }catch (Exception e){
+            dao.s3DeleteImage(des);
+            throw e;
+        }
         return newImage;
     }
 

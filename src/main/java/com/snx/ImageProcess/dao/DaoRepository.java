@@ -7,22 +7,24 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
 import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.collect.ImmutableMap;
-import com.jhlabs.image.BlockFilter;
-import com.jhlabs.image.GaussianFilter;
 import com.jhlabs.image.GrayscaleFilter;
 import com.snx.ImageProcess.object.Image;
+import com.snx.ImageProcess.object.filter.BlackWhite;
+import com.snx.ImageProcess.object.filter.Film;
+import com.snx.ImageProcess.object.filter.MyFilter;
+import com.snx.ImageProcess.object.filter.MyGray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class DaoRepository {
@@ -34,8 +36,11 @@ public class DaoRepository {
     private DynamoDBMapper dbMapper;
     // 图片的格式
     private static final String[] IMAGE_TYPE = new String[]{".bmp", ".jpg", ".jpeg", ".gif", ".png"};
-    private static final String[] FILTER_NAME = new String[]{"GaussianBlur", "Grayscale", "Mosaic", "MyGray"};
-
+    private static final Map<String, MyFilter> FILTER_MAP = new HashMap<String, MyFilter>(){{
+        put("MyGray", new MyGray());
+        put("BlackWhite", new BlackWhite());
+        put("Film", new Film());
+    }};
 
     // aws s3 operations
     public void s3UploadImage(String key, String imagePath) throws IOException {
@@ -137,48 +142,17 @@ public class DaoRepository {
         dbMapper.delete(image);
     }
 
-
     public BufferedImage applyFilter(BufferedImage image, String filterName) throws IOException {
-        if (filterName.equals(FILTER_NAME[0])) {
-            GaussianFilter gaussianFilter = new GaussianFilter();
-            return gaussianFilter.filter(image, null);
-        } else if (filterName.equals(FILTER_NAME[1])) {
+        if (filterName.equals("Grayscale")) {
             GrayscaleFilter grayscaleFilter = new GrayscaleFilter();
             return grayscaleFilter.filter(image, null);
-        } else if (filterName.equals(FILTER_NAME[2])) {
-            BlockFilter blockFilter = new BlockFilter();
-            return blockFilter.filter(image, null);
-        } else if (filterName.equals(FILTER_NAME[3])) {
-            //todo: mygray
-
-
-            return image;
         } else {
-            throw new IOException("No such Filter yet");
-        }
-    }
-
-    public BufferedImage myGray(BufferedImage image) {
-        int height = image.getHeight();
-        int width = image.getWidth();
-        BufferedImage dst = new BufferedImage(width, height, image.getType());
-        Graphics graphics = dst.getGraphics();
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                int pixel = image.getRGB(j, i);
-                Color color = new Color(pixel);
-                int r = color.getRed();
-                int g = color.getGreen();
-                int b = color.getBlue();
-//                int ave = (int)(r * 0.3 + g * 0.59 + b * 0.11);
-                int ave = (int) (r + g + b) / 3;
-                System.out.println(ave);
-                Color newColor = new Color(ave, ave, ave);
-                graphics.setColor(newColor);
-                graphics.fillOval(j, i, 1, 1);
+            if(!FILTER_MAP.containsKey(filterName)){
+                throw new IOException("No such Filter yet");
+            }else{
+                return FILTER_MAP.get(filterName).applyMyFilter(image);
             }
         }
-        graphics.dispose();
-        return dst;
     }
+
 }

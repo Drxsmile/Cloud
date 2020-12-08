@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression;
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
 import com.google.common.collect.ImmutableMap;
+import com.jhlabs.image.BlockFilter;
 import com.snx.ImageProcess.dao.AwsConfig;
 import com.snx.ImageProcess.dao.DaoRepository;
 import com.snx.ImageProcess.object.Image;
@@ -81,8 +82,8 @@ class ImageProcessApplicationTests {
     void testImageFilter() throws IOException {
         String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
         BufferedImage image = ImageIO.read(new FileInputStream(path));
-        BufferedImage dst = daoRepository.myGray(image);
-        File outputfile = new File("/Users/s/Desktop/腹肌小孩/save3.jpeg");
+        BufferedImage dst = daoRepository.applyFilter(image, "BlackWhite");
+        File outputfile = new File("/Users/s/Desktop/腹肌小孩/save2.jpeg");
         ImageIO.write(dst, "jpeg", outputfile);
     }
 

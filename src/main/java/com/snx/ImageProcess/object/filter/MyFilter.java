@@ -1,6 +1,5 @@
 package com.snx.ImageProcess.object.filter;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +11,7 @@ import java.awt.image.BufferedImage;
 public class MyFilter {
     private static final String filterName = "origin";
 
-    public BufferedImage applyMyFilter(BufferedImage image){
+    public BufferedImage applyMyFilter(BufferedImage image) {
         int height = image.getHeight();
         int width = image.getWidth();
         for (int i = 0; i < height; i++) {

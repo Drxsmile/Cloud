@@ -13,11 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.util.Map;
 
 @RestController
-@RequestMapping(path = "/graphql", produces = "application/json")
+@RequestMapping(path = "/graphql")
 public class GraphQLController {
     @Autowired
     private QueryResolver queryResolver;
@@ -27,11 +26,12 @@ public class GraphQLController {
     private GraphQL graphQL;
 
     @PostConstruct
-    public void init() throws IOException {
+    public void init() {
         GraphQLSchema graphQLSchema = SchemaParser.newParser()
                 .file("schema.graphqls")
                 .resolvers(queryResolver, mutationResolver)
                 .scalars(GraphQLScalarType.newScalar(new GraphQLDateScalar()).build())
+                .scalars(GraphQLScalarType.newScalar(new GraphQLUploadScalar()).build())
                 .build()
                 .makeExecutableSchema();
         graphQL = GraphQL.newGraphQL(graphQLSchema).build();

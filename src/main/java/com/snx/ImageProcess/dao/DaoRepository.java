@@ -15,7 +15,6 @@ import com.snx.ImageProcess.object.filter.MyFilter;
 import com.snx.ImageProcess.object.filter.MyGray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -35,28 +34,18 @@ public class DaoRepository {
     @Autowired
     private DynamoDBMapper dbMapper;
     // 图片的格式
-    private static final String[] IMAGE_TYPE = new String[]{".bmp", ".jpg", ".jpeg", ".gif", ".png"};
-    private static final Map<String, MyFilter> FILTER_MAP = new HashMap<String, MyFilter>(){{
+    private static final Map<String, MyFilter> FILTER_MAP = new HashMap<String, MyFilter>() {{
         put("MyGray", new MyGray());
         put("BlackWhite", new BlackWhite());
         put("Film", new Film());
     }};
 
     // aws s3 operations
-    public void s3UploadImage(String key, String imagePath) throws IOException {
-        File image = new File(imagePath);
-        Boolean isLegal = false;
-        for (String type : IMAGE_TYPE) {
-            if (StringUtils.endsWithIgnoreCase(image.getName(), type)) {
-                isLegal = true;
-                break;
-            }
-        }
-        if (isLegal) {
-            s3Client.putObject(awsConfig.getBucketName(), key, image);
-        } else {
-            throw new IOException("The file is not a image");
-        }
+    public void s3UploadImage(String key, BufferedImage bi) throws IOException {
+        File image = new File("temp.jpeg");
+        ImageIO.write(bi, "jpeg", image);
+        s3Client.putObject(awsConfig.getBucketName(), key, image);
+        image.delete();
     }
 
     public boolean s3DeleteImage(String key) {
@@ -147,9 +136,9 @@ public class DaoRepository {
             GrayscaleFilter grayscaleFilter = new GrayscaleFilter();
             return grayscaleFilter.filter(image, null);
         } else {
-            if(!FILTER_MAP.containsKey(filterName)){
+            if (!FILTER_MAP.containsKey(filterName)) {
                 throw new IOException("No such Filter yet");
-            }else{
+            } else {
                 return FILTER_MAP.get(filterName).applyMyFilter(image);
             }
         }

@@ -4,10 +4,13 @@ import com.coxautodev.graphql.tools.GraphQLMutationResolver;
 import com.snx.ImageProcess.dao.DaoRepository;
 import com.snx.ImageProcess.object.Image;
 import com.snx.ImageProcess.object.UpdateImageInput;
+import graphql.schema.DataFetchingEnvironment;
+import graphql.servlet.GraphQLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.Part;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -20,29 +23,30 @@ public class MutationResolver implements GraphQLMutationResolver {
     @Autowired
     private DaoRepository dao;
 
-    public Image saveOriginImage(String name, String imagePath) throws IOException {
-        //        DefaultGraphQLServletContext context = env.getContext();
+    public Image saveOriginImage(String name, Part image, DataFetchingEnvironment env) throws IOException {
+        Part imagePart = env.getArgument("image");
+        BufferedImage bi = ImageIO.read(imagePart.getInputStream());
         UUID id = UUID.randomUUID();
-        Image image = Image.builder()
+        Image origin = Image.builder()
                 .id(id.toString())
                 .filterName("origin")
                 .name(name)
                 .time(new Date())
                 .build();
         try {
-            String key = id.toString() + name + image.getFilterName();
-            dao.s3UploadImage(key, imagePath);
-            image.setS3Key(key);
+            String key = id.toString() + name + origin.getFilterName();
+            dao.s3UploadImage(key, bi);
+            origin.setS3Key(key);
         } catch (IOException e) {
             throw e;
         }
         try {
-            dao.saveImage(image);
+            dao.saveImage(origin);
         } catch (Exception e) {
-            dao.s3DeleteImage(image.getS3Key());
+            dao.s3DeleteImage(origin.getS3Key());
             throw e;
         }
-        return image;
+        return origin;
     }
 
     public Image updateImage(UpdateImageInput input) throws IOException {
@@ -59,9 +63,9 @@ public class MutationResolver implements GraphQLMutationResolver {
         String des = id + newName + filterName;
         if (filterName.equals(image.getFilterName())) {
             String key = image.getS3Key();
-            try{
+            try {
                 dao.s3CopyImage(key, des);
-            }catch (Exception e) {
+            } catch (Exception e) {
                 throw e;
             }
         } else {
@@ -69,19 +73,15 @@ public class MutationResolver implements GraphQLMutationResolver {
             File file = null;
             try {
                 BufferedImage filteredImage = dao.applyFilter(dao.s3download(key), filterName);
-                file = new File("temp.png");
-                ImageIO.write(filteredImage, "png", file);
-                dao.s3UploadImage(des, "temp.png");
+                dao.s3UploadImage(des, filteredImage);
             } catch (Exception e) {
                 throw e;
-            } finally {
-                file.delete();
             }
         }
         newImage.setS3Key(des);
-        try{
+        try {
             dao.saveImage(newImage);
-        }catch (Exception e){
+        } catch (Exception e) {
             dao.s3DeleteImage(des);
             throw e;
         }

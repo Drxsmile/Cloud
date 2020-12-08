@@ -10,15 +10,16 @@ import java.util.Date;
 
 public class GraphQLDateScalar extends GraphQLScalarType {
     public static final DateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
     public GraphQLDateScalar() {
         super("Date", "GraphQLDate type", new Coercing<Date, String>() {
             @Override
             public String serialize(Object dataFetcherResult) throws CoercingSerializeException {
-                try{
+                try {
                     Date date = (Date) dataFetcherResult;
                     return FORMAT.format(date);
-                }catch (CoercingSerializeException e){
-                    throw new CoercingSerializeException("Serialize failed: "+ String.valueOf(dataFetcherResult));
+                } catch (CoercingSerializeException e) {
+                    throw new CoercingSerializeException("Serialize failed: " + String.valueOf(dataFetcherResult));
                 }
 
             }

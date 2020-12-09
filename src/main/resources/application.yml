@@ -14,3 +14,8 @@ graphql:
     # if you want to @ExceptionHandler annotation for custom GraphQLErrors
     exception-handlers-enabled: true
     contextSetting: PER_REQUEST_WITH_INSTRUMENTATION
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 20MB

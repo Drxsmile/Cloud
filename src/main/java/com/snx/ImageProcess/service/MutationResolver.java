@@ -5,7 +5,6 @@ import com.snx.ImageProcess.dao.DaoRepository;
 import com.snx.ImageProcess.object.Image;
 import com.snx.ImageProcess.object.UpdateImageInput;
 import graphql.schema.DataFetchingEnvironment;
-import graphql.servlet.GraphQLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,16 +24,17 @@ public class MutationResolver implements GraphQLMutationResolver {
 
     public Image saveOriginImage(String name, Part image, DataFetchingEnvironment env) throws IOException {
         Part imagePart = env.getArgument("image");
+        String realName = env.getArgument("name");
         BufferedImage bi = ImageIO.read(imagePart.getInputStream());
         UUID id = UUID.randomUUID();
         Image origin = Image.builder()
                 .id(id.toString())
                 .filterName("origin")
-                .name(name)
+                .name(realName)
                 .time(new Date())
                 .build();
         try {
-            String key = id.toString() + name + origin.getFilterName();
+            String key = id.toString() + realName + origin.getFilterName();
             dao.s3UploadImage(key, bi);
             origin.setS3Key(key);
         } catch (IOException e) {

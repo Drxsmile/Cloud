@@ -1,35 +1,34 @@
 package com.snx.ImageProcess.service;
 
 import graphql.schema.*;
-
-import javax.servlet.http.Part;
+import org.springframework.web.multipart.MultipartFile;
 
 public class GraphQLUploadScalar extends GraphQLScalarType {
     public GraphQLUploadScalar() {
         super("Upload",
                 "A file part in a multipart request",
-                new Coercing<Part, Void>() {
+                new Coercing<byte[], Void>() {
                     @Override
                     public Void serialize(Object dataFetcherResult) {
                         throw new CoercingSerializeException("Upload is an input-only type");
                     }
 
                     @Override
-                    public Part parseValue(Object input) {
-                        if (input instanceof Part) {
-                            return (Part) input;
+                    public byte[] parseValue(Object input) {
+                        if (input instanceof byte[]) {
+                            return (byte[]) input;
                         } else if (null == input) {
                             return null;
                         } else {
                             throw new CoercingParseValueException("Expected type " +
-                                    Part.class.getName() +
+                                    MultipartFile.class.getName() +
                                     " but was " +
                                     input.getClass().getName());
                         }
                     }
 
                     @Override
-                    public Part parseLiteral(Object input) {
+                    public byte[] parseLiteral(Object input) {
                         throw new CoercingParseLiteralException(
                                 "Must use variables to specify Upload values");
                     }

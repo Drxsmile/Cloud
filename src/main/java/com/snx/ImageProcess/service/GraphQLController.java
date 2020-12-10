@@ -3,7 +3,6 @@ package com.snx.ImageProcess.service;
 import com.coxautodev.graphql.tools.SchemaParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.snx.ImageProcess.PartDeserializer;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -14,22 +13,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.PostConstruct;
-import javax.naming.OperationNotSupportedException;
-import javax.servlet.http.Part;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping(path = "/graphql", produces = "application/json", consumes = {"application/json", "multipart/form-data"})
+@RequestMapping(path = "/graphql", consumes = {"application/json", "multipart/form-data"})
 public class GraphQLController {
     @Autowired
     private QueryResolver queryResolver;
@@ -58,11 +53,11 @@ public class GraphQLController {
     public Map<String, Object> myGraphql(
             @RequestHeader(value = HttpHeaders.CONTENT_TYPE, required = false) String contentType,
             @RequestBody(required = false) String body,
-            WebRequest webRequest,
+            WebRequest webRequest, MultipartHttpServletRequest multipartHttpServletRequest,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "operationName", required = false) String operationName,
             @RequestParam(value = "variables", required = false) String variablesJson
-    ) throws JsonProcessingException, OperationNotSupportedException {
+    ) throws IOException {
         if (body == null) {
             body = "";
         }
@@ -74,17 +69,17 @@ public class GraphQLController {
             return execute(request.getQuery(), request.getOperationName(), request.getVariables());
         } else if (contentType != null && contentType.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE)) {
             String name = webRequest.getParameter("name");
-            Part image = objectMapper.readValue(webRequest.getParameter("image"), Part.class);
+            MultipartFile file = multipartHttpServletRequest.getFile("image");
             RequestQuery request = objectMapper.readValue(webRequest.getParameter("operations"), RequestQuery.class);
-            if(request.getQuery() != null) {
+            if (request.getQuery() != null) {
                 request.getVariables().put("name", name);
-                request.getVariables().put("image", image);
-            }else {
+                request.getVariables().put("image", file.getBytes());
+            } else {
                 request.setQuery("");
             }
             return execute(request.getQuery(), request.getOperationName(), request.getVariables());
         }
-        if (query != null){
+        if (query != null) {
             return execute(query, operationName, convertVariablesJson(variablesJson));
         }
         if ("application/graphql".equals(contentType)) {

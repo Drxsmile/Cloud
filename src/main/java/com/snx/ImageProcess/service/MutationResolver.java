@@ -9,10 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
-import javax.servlet.http.Part;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -22,10 +23,10 @@ public class MutationResolver implements GraphQLMutationResolver {
     @Autowired
     private DaoRepository dao;
 
-    public Image saveOriginImage(String name, Part image, DataFetchingEnvironment env) throws IOException {
-        Part imagePart = env.getArgument("image");
+    public Image saveOriginImage(String name, byte[] image, DataFetchingEnvironment env) throws IOException {
         String realName = env.getArgument("name");
-        BufferedImage bi = ImageIO.read(imagePart.getInputStream());
+        InputStream inputStream = new ByteArrayInputStream(env.getArgument("image"));
+        BufferedImage bi = ImageIO.read(inputStream);
         UUID id = UUID.randomUUID();
         Image origin = Image.builder()
                 .id(id.toString())

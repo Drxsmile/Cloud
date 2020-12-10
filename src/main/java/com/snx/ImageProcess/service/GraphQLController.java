@@ -3,6 +3,7 @@ package com.snx.ImageProcess.service;
 import com.coxautodev.graphql.tools.SchemaParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.snx.ImageProcess.PartDeserializer;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -21,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.PostConstruct;
 import javax.naming.OperationNotSupportedException;
+import javax.servlet.http.Part;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -71,27 +73,12 @@ public class GraphQLController {
             }
             return execute(request.getQuery(), request.getOperationName(), request.getVariables());
         } else if (contentType != null && contentType.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE)) {
+            String name = webRequest.getParameter("name");
+            Part image = objectMapper.readValue(webRequest.getParameter("image"), Part.class);
             RequestQuery request = objectMapper.readValue(webRequest.getParameter("operations"), RequestQuery.class);
             if(request.getQuery() != null) {
-                LinkedHashMap<String, ArrayList<String>> multipartFileKeyVariablePathMap = objectMapper.readValue(webRequest.getParameter("map"), LinkedHashMap.class);
-
-                MultipartHttpServletRequest multiPartRequest = (MultipartHttpServletRequest) ((ServletWebRequest) webRequest).getNativeRequest();
-                Map<String, MultipartFile> multipartFileMap = multiPartRequest.getFileMap();
-
-                for(Map.Entry<String,MultipartFile> e: multipartFileMap.entrySet()){
-                    String pathString = multipartFileKeyVariablePathMap.get(e.getKey()).get(0); /*i.e. "variables.files" or "variables.fileList.NUMBER*/
-                    if (pathString.matches("variables\\.[a-zA-Z0-9]*?\\.\\d")) {
-                        String[] splittedPath = pathString.split("\\.", 3);
-                        final Object variablesArray = request.getVariables().get(splittedPath[1]);
-                        if (variablesArray instanceof ArrayList)
-                            ((ArrayList) variablesArray).set(Integer.parseInt(splittedPath[2]), e.getValue());
-                        else
-                            throw new OperationNotSupportedException("Array of files represented by not supported collection");
-                    } else if (pathString.startsWith("variables.")) {
-                        String[] splittedPath = pathString.split("\\.",2);
-                        request.getVariables().put(splittedPath[1],e.getValue());
-                    }
-                }
+                request.getVariables().put("name", name);
+                request.getVariables().put("image", image);
             }else {
                 request.setQuery("");
             }

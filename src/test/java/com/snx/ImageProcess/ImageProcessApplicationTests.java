@@ -30,17 +30,17 @@ class ImageProcessApplicationTests {
     }
 
 
-    @Autowired
-    AwsConfig awsConfig;
-    @Autowired
-    private DaoRepository daoRepository;
-
-    @Test
-    void testS3UploadImage() throws IOException {
-        String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
+//    @Autowired
+//    AwsConfig awsConfig;
+//    @Autowired
+//    private DaoRepository daoRepository;
+//
+//    @Test
+//    void testS3UploadImage() throws IOException {
+//        String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
 //        System.out.println(daoRepository.s3UploadImage(path));
 //		System.out.println(awsConfig.s3Client().getRegion());
-    }
+//    }
 
 //    @Test
 //    void testSaveImage() {
@@ -49,53 +49,53 @@ class ImageProcessApplicationTests {
 //        daoRepository.saveImage(image);
 //    }
 
-    @Test
-    void myTest() {
-        String accessKey = awsConfig.getAccessKey();
-        String secretKey = "QAy5peDdO/uv+1jk614KsXArsjJp2hsiZdrKrLvE";
+//    @Test
+//    void myTest() {
+//        String accessKey = awsConfig.getAccessKey();
+//        String secretKey = "QAy5peDdO/uv+1jk614KsXArsjJp2hsiZdrKrLvE";
 //		System.out.println(accessKey);
 //		System.out.println(secretKey);
 
 //		System.out.println(dbClient.listTables());
-        DynamoDBMapper dbMapper = new DynamoDBMapper(awsConfig.dbClient());
-        DynamoDBSaveExpression saveExpression = new DynamoDBSaveExpression();
-        saveExpression.setExpected(new ImmutableMap.Builder()
-                .put("id", new ExpectedAttributeValue(false))
-                .put("name", new ExpectedAttributeValue(false))
-                .put("s3Key", new ExpectedAttributeValue(false))
-                .put("time", new ExpectedAttributeValue(false))
-                .put("filterName", new ExpectedAttributeValue(false))
-                .build());
-        if (daoRepository.getImage("12", "i2") != null) {
-            System.out.println("ss");
-            return;
-        }
-        Image image = new Image("12", "i2", "234", new Date(), "origin");
-        dbMapper.save(image, saveExpression);
+//        DynamoDBMapper dbMapper = new DynamoDBMapper(awsConfig.dbClient());
+//        DynamoDBSaveExpression saveExpression = new DynamoDBSaveExpression();
+//        saveExpression.setExpected(new ImmutableMap.Builder()
+//                .put("id", new ExpectedAttributeValue(false))
+//                .put("name", new ExpectedAttributeValue(false))
+//                .put("s3Key", new ExpectedAttributeValue(false))
+//                .put("time", new ExpectedAttributeValue(false))
+//                .put("filterName", new ExpectedAttributeValue(false))
+//                .build());
+//        if (daoRepository.getImage("12", "i2") != null) {
+//            System.out.println("ss");
+//            return;
+//        }
+//        Image image = new Image("12", "i2", "234", new Date(), "origin");
+//        dbMapper.save(image, saveExpression);
 //		DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression();
 //		dbMapper.query(image, queryExpression);
-    }
+//    }
 
-    @Test
-    void testImageFilter() throws IOException {
-        String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
-        BufferedImage image = ImageIO.read(new FileInputStream(path));
-        BufferedImage dst = daoRepository.applyFilter(image, "MyGray");
-        File outputfile = new File("/Users/s/Desktop/腹肌小孩/save2.jpeg");
-        ImageIO.write(dst, "jpeg", outputfile);
-    }
-
-    @Test
-    void testGetImages() throws ParseException {
-        List<Image> images = daoRepository.getImages("12");
+//    @Test
+//    void testImageFilter() throws IOException {
+//        String path = "/Users/s/Desktop/腹肌小孩/timg.jpeg";
+//        BufferedImage image = ImageIO.read(new FileInputStream(path));
+//        BufferedImage dst = daoRepository.applyFilter(image, "MyGray");
+//        File outputfile = new File("/Users/s/Desktop/腹肌小孩/save2.jpeg");
+//        ImageIO.write(dst, "jpeg", outputfile);
+//    }
+//
+//    @Test
+//    void testGetImages() throws ParseException {
+//        List<Image> images = daoRepository.getImages("12");
 //        for (Image i : images) {
 //            System.out.println(i);
 //        }
-        System.out.println(images.get(0).getTime());
-    }
-
-    @Autowired
-    private MutationResolver mutationResolver;
+//        System.out.println(images.get(0).getTime());
+//    }
+//
+//    @Autowired
+//    private MutationResolver mutationResolver;
 
 //    @Test
 //    void testUpdateImage() throws ParseException, IOException {

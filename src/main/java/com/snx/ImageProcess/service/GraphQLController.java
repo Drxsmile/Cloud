@@ -52,17 +52,11 @@ public class GraphQLController {
 
     }
 
-    @PostMapping(consumes = {"application/json", "multipart/form-data"})
-
+    @PostMapping(consumes = {"application/json"})
     public Map<String, Object> myGraphql(
             @RequestHeader(value = HttpHeaders.CONTENT_TYPE, required = false) String contentType,
-            @RequestBody(required = false) String body,
-            WebRequest webRequest,
-            @RequestParam(required = false) MultipartHttpServletRequest multipartHttpServletRequest,
-            @RequestParam(value = "query", required = false) String query,
-            @RequestParam(value = "operationName", required = false) String operationName,
-            @RequestParam(value = "variables", required = false) String variablesJson
-    ) throws IOException, OperationNotSupportedException {
+            @RequestBody(required = false) String body
+    ) throws IOException {
         if (body == null) {
             body = "";
         }
@@ -72,42 +66,38 @@ public class GraphQLController {
                 request.setQuery("");
             }
             return execute(request.getQuery(), request.getOperationName(), request.getVariables());
-        } else if (contentType != null && contentType.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE)) {
-            LinkedHashMap<String, ArrayList<String>> multipartFileKeyVariablePathMap = objectMapper.readValue(webRequest.getParameter("map"), LinkedHashMap.class);
-            System.out.println(multipartFileKeyVariablePathMap);
-            String name = webRequest.getParameter("name");
+        }
+        if ("application/graphql".equals(contentType)) {
+            return execute(body, null, null);
+        }
+        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Could not process GraphQL request");
+
+    }
+
+    @PostMapping(consumes = {"multipart/form-data"})
+
+    public Map<String, Object> myGraphql(
+            @RequestHeader(value = HttpHeaders.CONTENT_TYPE, required = false) String contentType,
+            @RequestBody(required = false) String body,
+            MultipartHttpServletRequest multipartHttpServletRequest,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "operations", required = false) String operations,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "operationName", required = false) String operationName,
+            @RequestParam(value = "variables", required = false) String variablesJson
+    ) throws IOException, OperationNotSupportedException {
+        if (body == null) {
+            body = "";
+        }
+        if (contentType != null && contentType.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE)) {
             MultipartFile file = multipartHttpServletRequest.getFile("image");
-            RequestQuery request = objectMapper.readValue(webRequest.getParameter("operations"), RequestQuery.class);
+            RequestQuery request = objectMapper.readValue(operations, RequestQuery.class);
             if (request.getQuery() != null) {
                 request.getVariables().put("name", name);
                 request.getVariables().put("image", file.getBytes());
             } else {
                 request.setQuery("");
             }
-//            if(request.getQuery() != null) {
-//                LinkedHashMap<String, ArrayList<String>> multipartFileKeyVariablePathMap = objectMapper.readValue(webRequest.getParameter("map"), LinkedHashMap.class);
-//                System.out.println(multipartFileKeyVariablePathMap);
-//                MultipartHttpServletRequest multiPartRequest = (MultipartHttpServletRequest) ((ServletWebRequest) webRequest).getNativeRequest();
-//                Map<String, MultipartFile> multipartFileMap = multiPartRequest.getFileMap();
-//                System.out.println(multipartFileMap);
-//                for(Map.Entry<String,MultipartFile> e: multipartFileMap.entrySet()){
-//                    String pathString = multipartFileKeyVariablePathMap.get(e.getKey()).get(0); /*i.e. "variables.files" or "variables.fileList.NUMBER*/
-//                    if (pathString.matches("variables\\.[a-zA-Z0-9]*?\\.\\d")) {
-//                        String[] splittedPath = pathString.split("\\.", 3);
-//                        final Object variablesArray = request.getVariables().get(splittedPath[1]);
-//                        if (variablesArray instanceof ArrayList)
-//                            ((ArrayList) variablesArray).set(Integer.parseInt(splittedPath[2]), e.getValue().getBytes());
-//                        else
-//                            throw new OperationNotSupportedException("Array of files represented by not supported collection");
-//                    } else if (pathString.startsWith("variables.")) {
-//                        String[] splittedPath = pathString.split("\\.",2);
-//                        request.getVariables().put(splittedPath[1],e.getValue().getBytes());
-//                    }
-//                }
-//            }else {
-//                request.setQuery("");
-//            }
-
             return execute(request.getQuery(), request.getOperationName(), request.getVariables());
         }
         if (query != null) {
@@ -116,9 +106,7 @@ public class GraphQLController {
         if ("application/graphql".equals(contentType)) {
             return execute(body, null, null);
         }
-
         throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Could not process GraphQL request");
-
     }
 
     @GetMapping

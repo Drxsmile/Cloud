@@ -8,7 +8,14 @@ import com.snx.ImageProcess.dao.AwsConfig;
 import com.snx.ImageProcess.dao.DaoRepository;
 import com.snx.ImageProcess.object.Image;
 import com.snx.ImageProcess.service.MutationResolver;
+import com.snx.ImageProcess.service.QueryResolver;
+import graphql.Assert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -20,20 +27,35 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class ImageProcessApplicationTests {
 
-    @Test
-    void contextLoads() {
+    @Mock
+    private DaoRepository daoRepository;
+    @Spy
+    @InjectMocks
+    private MutationResolver mutationResolver;
+    @Spy
+    @InjectMocks
+    private QueryResolver queryResolver;
 
+    @BeforeEach
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
     }
 
+    @Test
+    public void testDeleteImage(){
+        Image image = new Image();
+        doReturn(image).when(daoRepository.getImage(anyString(), anyString()));
+        doReturn(true).when(daoRepository.s3DeleteImage(anyString()));
+        doReturn(true).when(daoRepository.deleteImage(image));
+        when(mutationResolver.deleteImage("1223", "sdds")).thenCallRealMethod();
+        verify(mutationResolver, times(1)).deleteImage("1223", "sdds");
+    }
 
-//    @Autowired
-//    AwsConfig awsConfig;
-//    @Autowired
-//    private DaoRepository daoRepository;
 //
 //    @Test
 //    void testS3UploadImage() throws IOException {

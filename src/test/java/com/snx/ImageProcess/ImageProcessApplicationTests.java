@@ -49,12 +49,7 @@ class ImageProcessApplicationTests {
     @Spy
     @InjectMocks
     private QueryResolver queryResolver;
-    @Mock
-    private AwsConfig awsConfig;
-    @Mock
-    private AmazonS3 s3Client;
-    @Mock
-    private DynamoDBMapper dbMapper;
+
     @BeforeEach
     public void setup() {
         MockitoAnnotations.initMocks(this);

@@ -57,12 +57,17 @@ class ImageProcessApplicationTests {
 
     @Test
     public void testDeleteImage(){
-        Image image = new Image();
-        when(daoRepository.getImage(anyString(), anyString())).thenReturn(image);
-        when(daoRepository.s3DeleteImage(anyString())).thenReturn(true);
-        doNothing().when(daoRepository).deleteImage(image);
-        when(mutationResolver.deleteImage("1223", "sdds")).thenCallRealMethod();
-        verify(mutationResolver, times(2)).deleteImage("1223", "sdds");
+        Image image = Image.builder()
+                .id("1223")
+                .name("sdds")
+                .time(new Date())
+                .filterName("origin")
+                .build();
+        image.setS3Key(image.getId()+image.getName()+image.getFilterName());
+        doReturn(image).when(daoRepository).getImage(anyString(), anyString());
+        doReturn(true).when(daoRepository).s3DeleteImage(anyString());
+        mutationResolver.deleteImage("1223", "sdds");
+        verify(daoRepository, times(1)).deleteImage(image);
     }
     @Test
     public void testDeleteImages(){
@@ -75,11 +80,11 @@ class ImageProcessApplicationTests {
                 .id("1234").time(new Date()).name("Wsd").filterName("MyGray").build();
         image2.setS3Key(image2.getId()+image2.getName()+image2.getFilterName());
         list.add(image2);
-        when(daoRepository.getImages(anyString())).thenReturn(list);
-        when(daoRepository.s3DeleteImage(anyString())).thenReturn(true);
-        doNothing().when(daoRepository).deleteImage(new Image());
-        when(mutationResolver.deleteImages("1234")).thenCallRealMethod();
-        verify(mutationResolver).deleteImages("1234");
+        doReturn(list).when(daoRepository).getImages(anyString());
+        doReturn(true).when(daoRepository).s3DeleteImage(anyString());
+        Boolean isDeleted = mutationResolver.deleteImages("1234");
+        Assertions.assertEquals(isDeleted, true);
+        verify(daoRepository, times(list.size())).deleteImage(any());
         ArgumentCaptor<String> argument = ArgumentCaptor.forClass(String.class);
         verify(mutationResolver).deleteImages(argument.capture());
         Assertions.assertEquals("1234", argument.getValue());
@@ -91,30 +96,41 @@ class ImageProcessApplicationTests {
         for (int i = 0; i < 99; i++) {
             bytes[i] = 1;
         }
-        when(environment.getArgument("image")).thenReturn(bytes);
+        doReturn(bytes).when(environment).getArgument("image");
         try{
-            when(mutationResolver.saveOriginImage("sjdi", bytes, environment)).thenCallRealMethod();
+            mutationResolver.saveOriginImage("sjdi", bytes, environment);
         }catch (IOException e){
             Assertions.assertEquals("io", e.getMessage());
-            verify(mutationResolver).saveOriginImage("sjdi", bytes, environment);
+        }finally {
+            verify(daoRepository, times(1)).s3UploadImage(any(), any());
+            verify(daoRepository, times(0)).saveImage(any());
+            verify(daoRepository, times(0)).s3DeleteImage(any());
         }
     }
     @Test
-    public void testUpdateImage(){
+    public void testUpdateImage() throws IOException {
         doThrow(new RuntimeException("s3")).when(daoRepository).s3CopyImage(anyString(), anyString());
         UpdateImageInput input = UpdateImageInput.builder()
                 .filterName("Grayscale")
                 .id("b7f703a9-84f0-41d7-83a4-78ce78f98f4f")
                 .name("sd")
                 .newName("dpd").build();
-        Image image = Image.builder().filterName("Grayscale")
+        Image image = Image.builder()
                 .id("b7f703a9-84f0-41d7-83a4-78ce78f98f4f")
                 .build();
-        when(daoRepository.getImage(anyString(), anyString())).thenReturn(image);
+        doReturn(image).when(daoRepository).getImage(anyString(), anyString());
+        image.setFilterName("Grayscale");
         try {
-            when(mutationResolver.updateImage(input)).thenCallRealMethod();
+            mutationResolver.updateImage(input);
         } catch (RuntimeException | IOException e) {
             Assertions.assertEquals("s3", e.getMessage());
+        }finally {
+            verify(daoRepository, times(1)).s3CopyImage(any(), anyString());
+            verify(daoRepository, times(0)).applyFilter(any(), any());
+            verify(daoRepository, times(0)).s3download(any());
+            verify(daoRepository, times(0)).s3UploadImage(any(), any());
+            verify(daoRepository, times(0)).saveImage(any());
+            verify(daoRepository, times(0)).s3DeleteImage(any());
         }
     }
 

@@ -67,7 +67,7 @@ public class MutationResolver implements GraphQLMutationResolver {
             try {
                 dao.s3CopyImage(key, des);
             } catch (Exception e) {
-                throw e;
+                return null;
             }
         } else {
             String key = id + input.getName() + "origin";
@@ -76,7 +76,8 @@ public class MutationResolver implements GraphQLMutationResolver {
                 BufferedImage filteredImage = dao.applyFilter(dao.s3download(key), filterName);
                 dao.s3UploadImage(des, filteredImage);
             } catch (Exception e) {
-                throw e;
+                e.printStackTrace();
+                return null;
             }
         }
         newImage.setS3Key(des);

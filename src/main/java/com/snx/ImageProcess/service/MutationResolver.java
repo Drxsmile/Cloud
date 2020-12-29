@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -39,13 +38,15 @@ public class MutationResolver implements GraphQLMutationResolver {
             dao.s3UploadImage(key, bi);
             origin.setS3Key(key);
         } catch (IOException e) {
-            throw e;
+            e.printStackTrace();
+            return null;
         }
         try {
             dao.saveImage(origin);
         } catch (Exception e) {
             dao.s3DeleteImage(origin.getS3Key());
-            throw e;
+            e.printStackTrace();
+            return null;
         }
         return origin;
     }
@@ -67,11 +68,11 @@ public class MutationResolver implements GraphQLMutationResolver {
             try {
                 dao.s3CopyImage(key, des);
             } catch (Exception e) {
+                e.printStackTrace();
                 return null;
             }
         } else {
             String key = id + input.getName() + "origin";
-            File file = null;
             try {
                 BufferedImage filteredImage = dao.applyFilter(dao.s3download(key), filterName);
                 dao.s3UploadImage(des, filteredImage);
@@ -85,7 +86,8 @@ public class MutationResolver implements GraphQLMutationResolver {
             dao.saveImage(newImage);
         } catch (Exception e) {
             dao.s3DeleteImage(des);
-            throw e;
+            e.printStackTrace();
+            return null;
         }
         return newImage;
     }

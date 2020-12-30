@@ -11,7 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -82,9 +85,6 @@ class ImageProcessApplicationTests {
         Boolean isDeleted = mutationResolver.deleteImages("1234");
         Assertions.assertEquals(isDeleted, true);
         verify(daoRepository, times(list.size())).deleteImage(any());
-        ArgumentCaptor<String> argument = ArgumentCaptor.forClass(String.class);
-        verify(mutationResolver).deleteImages(argument.capture());
-        Assertions.assertEquals("1234", argument.getValue());
     }
 
     @Test
@@ -233,6 +233,11 @@ class ImageProcessApplicationTests {
         doReturn(image).when(daoRepository).getImage(anyString(), anyString());
         image.setFilterName("MyGray");
         Image img = Image.builder().id("3333").build();
+        ArgumentCaptor<BufferedImage> argument1 = ArgumentCaptor.forClass(BufferedImage.class);
+        ArgumentCaptor<String> argument2 = ArgumentCaptor.forClass(String.class);
+        doReturn(ImageIO.read(
+                new URL("https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fwx4.sinaimg.cn%2Fmw690%2F005yjJKsgy1ghc58uwyt4j30hs0iitaa.jpg&refer=http%3A%2F%2Fwx4.sinaimg.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1611893191&t=bd92842c7398403be7f1ba9951de2234"
+                ))).when(daoRepository).s3download(any());
         doThrow(new RuntimeException("s3")).when(daoRepository).saveImage(any());
         try {
             img = mutationResolver.updateImage(input);
@@ -241,7 +246,9 @@ class ImageProcessApplicationTests {
         } finally {
             Assertions.assertEquals(null, img);
             verify(daoRepository, times(0)).s3CopyImage(any(), any());
-            verify(daoRepository, times(1)).applyFilter(any(), any());
+            verify(daoRepository, times(1)).applyFilter(argument1.capture(), argument2.capture());
+            Assertions.assertEquals(BufferedImage.class, argument1.getValue().getClass());
+            Assertions.assertEquals("Grayscale", argument2.getValue());
             verify(daoRepository, times(1)).s3download(any());
             verify(daoRepository, times(1)).s3UploadImage(any(), any());
             verify(daoRepository, times(1)).saveImage(any());
